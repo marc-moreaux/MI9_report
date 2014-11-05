@@ -1,0 +1,118 @@
+
+
+
+
+
+% \section{Motivation of choices}
+
+% 	\subsection{initial values of hidden weights}
+
+% 		The initial values for the weights of a hidden layer i should be uniformly sampled from a symmetric interval that depends on the activation function. For tanh activation function results obtained in [Xavier10] show that the interval should be 
+% 		$[-\sqrt{\frac{6}{fan_{in}+fan_{out}}},\sqrt{\frac{6}{fan_{in}+fan_{out}}}] $,
+% 		where $fan_{in}$ is the number of units in the $(i-1)-th$ layer, and $fan_{out}$ is the number of units in the $i-th$ layer. For the sigmoid function the interval is $[-4\sqrt{\frac{6}{fan_{in}+fan_{out}}},4\sqrt{\frac{6}{fan_{in}+fan_{out}}}]$.
+% 		This initialization ensures that, early in training, each neuron operates in a regime of its activation function where information can easily be propagated both upward (activations flowing from inputs to outputs) and backward (gradients flowing from outputs to inputs).
+
+% 		[Xavier10] => Y. Bengio, X. Glorot, Understanding the difficulty of training deep feedforward neuralnetworks, AISTATS 2010
+
+
+
+\section{Configuration setup}
+	
+	We've chosen to run the neural network under python. In this section we'll see how to set-up the machine. Our machine is based on Linux. It has been reset and installed from scratch for the purpose of the project. We will see how to install python and its dependencies for the neural network. Then is described how to set up the computer so that it can compute matrix math on the Nvidia graphic card with CUDA. And finally how to use other computers to do our math.
+
+
+	\subsection{Operating system}
+		The operating system chosen to run our models is Ubuntu 14.04 LTS. The choice of Linux has been motivated by many factors. 
+
+		\begin{itemize}
+			
+			\item The first reason for Ubuntu 14.04 more than previous versions of it, or more than Linux Mint, is that Ubuntu 14.04 provide a better support of Graphic Process Unit (GPU). We will see below that we need to use a technology called CUDA. This technology bases itself on computing matrices calculus on the GPU for more efficient code.
+
+			\item The second reason for Ubuntu is that we use Python and a Python library called Theano. This specific library wasn't tested by the developers nor on windows nor on IOS. Therefore we avoid possible errors by having a Linux environment.
+
+
+
+		\end{itemize}
+
+
+	\subsection{Python}
+		We chose to program under Python. The main reason behind this choice is that Python has a library called Theano.
+		Theano has been implemented to compute efficiently the math present in machine learning algorithms. 
+		[TODO: Tell more about Theano]
+
+		Theano relies on other libraries like numpy and scipy for matrix implementation, g++ and python-dev to generate code in C and benefit for faster execution. 
+
+		\begin{lstlisting}[language=bash]
+# install python and dependencies
+sudo apt-get install python-numpy python-scipy python-dev python-pip 
+sudo apt-get install python-nose g++ libopenblas-dev git
+pip install Theano
+		\end{lstlisting}
+
+
+
+	\subsection{Compute Unified Device Architecture}
+		Compute Unified Device Architecture (CUDA) is a technology of General-Purpose Computing on Graphics Processing Units. In other words, it is a technology that permits to execute on the GPU code that could be calculated on the CPU but it takes the advantage that GPUs are better than CPUs for matrix computation to switch from one to the other.
+		CUDA was developed by Nvidia for its graphic cards.
+		\\
+		To install CUDA on Ubuntu 14.04 64bits you first need to verify that your product is compatible\cite{website:CUDA_compatibility}. Then download the Debian software package from the Nvidia website and launch the install.
+		When the install is over, reboot your machine to finish the drivers setup and set some environment variables.
+		The bash code provided below is to set up the machine
+ 
+
+		\begin{lstlisting}[language=bash]
+#Install CUDA (for ubuntu_lts 64bits 14.04)
+mkdir ~/cudaTmp
+cd ~/cudaTmp
+wget http://developer.download.nvidia.com/compute/cuda/repos/
+... ubuntu1404/x86_64/cuda-repo-ubuntu1404_6.5-14_amd64.deb
+sudo dpkg -i cuda-repo-ubuntu1404_6.5-14_amd64.deb
+sudo apt-get update
+sudo apt-get install cuda
+sudo reboot
+
+#add CUDA environment varaibles to your user session
+echo '#Add CUDA variables' >> ~/.bashrc
+echo 'export CUDA_HOME=/usr/local/cuda-6.5' >> ~/.bashrc
+echo 'export LD_LIBRARY_PATH=${CUDA_HOME}/lib64' >> ~/.bashrc
+echo '' >> ~/.bashrc
+echo 'PATH=${CUDA_HOME}/bin:${PATH}' >> ~/.bashrc
+echo 'export PATH' >> ~/.bashrc
+
+# launch python code on GPU with CUDA
+THEANO_FLAGS=mode=FAST_RUN,device=gpu,floatX=float32 python myCode.py
+		\end{lstlisting}
+
+
+
+.\\ \\ \\ \\ \\
+*************** END: Below is TODO ************** 
+ 
+
+	\subsection{ssh}
+		[TODO: If we want to run the code on other computers...]
+
+		ssh -N -f -L 2222:athenes:22 moreaux@gandalf 
+		scp -P 2222 dataset* moreaux@localhost:/home/people/m/moreaux/Desktop
+		nohup python tata.py \&
+		screen
+		
+
+
+
+\section{Theano introduction}
+			
+	\subsection{model construction}
+	\subsection{shared Memory}
+	\subsection{gradient}
+
+\section{preprocessing the data}
+	\subsection{from CSV to cPickle}
+	\subsection{data x data y}
+	\subsection{hash words}
+
+
+
+\bibliographystyle{plain}
+\bibliography{local}
+
