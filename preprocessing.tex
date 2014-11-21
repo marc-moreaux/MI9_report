@@ -1,0 +1,26 @@
+
+
+
+
+
+\section{pre-processing the data}
+\label{sec:preprocessing}
+
+	Pre-processing is the fact of transforming an input data into another input data. As it comes before processing the data, it should help this step in doing better work.
+	Right now we will see neural network techniques to pre-process the data. Those techniques are described on the "Unsupervised Feature Learning and Deep Learning"\footnote{\url{http://ufldl.stanford.edu/wiki/index.php/UFLDL_Tutorial}} wiki tutorial provided by Stanford.
+
+	\subsection{Data normalization}
+		The common methods are: simple rescaling, per-example mean subtraction and feature standardization.\\
+		Simple rescaling aims at having all the data dimension on the same scale. You wouldn't want to have an independent feature with values in range [$10^{-5}$,$3*10^{-5}$] and another independent feature in range [$-10^{6}$,$10^{6}$]. Depending on the activation function, the data should be in the range [0,1] or [-1,1].
+		Per example mean subtraction consist of removing the mean value of a vector. For instance, if you want to examine the stability of a plane in the air and you have an altitude feature then you may reconsider your ground reference. You can instead consider a mean \textit{plane in the air altitude} as reference to subtract the altitude to.
+		Feature standardization consist in two steps: first, setting the input vectors mean to a zero mean and second, setting the variance to a unit variance. To do this, one needs to compute the mean and the variance of the data, then subtract the mean and divide by the variance each data points.
+
+
+
+	In our case, we have to preprocess an input matrice so it help our neural network in performing better.
+	As mentioned in section \ref{sec:dataset}, the dataset has a large collection of different features (position, cryptography, parsing...). Those features are initially defined as either binaries, integer, or text values. We need to pre-process those to have a fully numerical input vector. For every classes that are not text values, we use feature standardisation by applying the math described previously.
+
+
+
+
+
