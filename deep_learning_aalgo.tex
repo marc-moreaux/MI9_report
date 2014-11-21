@@ -209,7 +209,7 @@
 			\foreach \name / \y in {1,...,4} % Draw the hidden4 nodes
 				\node[neuron] (H4-\name) at (\y+0.0,\layersep*6) {};
 
-				\node[annot]  (N2-1)       at (2.5   ,\layersep*5)  {...};
+				\node[annot]  (N2-1)     at (2.5   ,\layersep*5)  {...};
 
 			\foreach \name / \y in {1,...,3} % Draw the hidden3 nodes
 				\node[neuron] (H3-\name) at (\y+0.5,\layersep*4) {};
@@ -217,7 +217,7 @@
 			\foreach \name / \y in {1,...,4} % Draw the hidden2 nodes
 				\node[neuron] (H2-\name) at (\y+0.0,\layersep*3) {};
 
-				\node[annot]  (N1-1)       at (2.5   ,\layersep*2)  {...};
+				\node[annot]  (N1-1)     at (2.5   ,\layersep*2)  {...};
 
 			\foreach \name / \y in {1,...,4} % Draw the hidden1 nodes
 				\node[neuron] (H1-\name) at (\y+0.0,\layersep*1) {};
@@ -260,8 +260,8 @@
 			% Annotate the layers
 			\node[annot] at (-1,\layersep*7) {Output layer};
 			\node[annot] at (-1,\layersep*6) {Hidden layer N-1};
-			\node[annot] at (-1,\layersep*4) {Hidden layer i};
-			\node[annot] at (-1,\layersep*3) {Hidden layer j};
+			\node[annot] at (-1,\layersep*4) {Hidden neurons: x_j^{(n)}};
+			\node[annot] at (-1,\layersep*3) {Hidden neurons: x_i^{(n-1)}};
 			\node[annot] at (-1,\layersep*1) {Hidden layer 1};
 			\node[annot] at (-1,\layersep*0) {Input layer};
 
