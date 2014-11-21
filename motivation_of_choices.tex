@@ -1,21 +1,6 @@
 
 
 
-
-
-% \section{Motivation of choices}
-
-% 	\subsection{initial values of hidden weights}
-
-% 		The initial values for the weights of a hidden layer i should be uniformly sampled from a symmetric interval that depends on the activation function. For tanh activation function results obtained in [Xavier10] show that the interval should be 
-% 		$[-\sqrt{\frac{6}{fan_{in}+fan_{out}}},\sqrt{\frac{6}{fan_{in}+fan_{out}}}] $,
-% 		where $fan_{in}$ is the number of units in the $(i-1)-th$ layer, and $fan_{out}$ is the number of units in the $i-th$ layer. For the sigmoid function the interval is $[-4\sqrt{\frac{6}{fan_{in}+fan_{out}}},4\sqrt{\frac{6}{fan_{in}+fan_{out}}}]$.
-% 		This initialization ensures that, early in training, each neuron operates in a regime of its activation function where information can easily be propagated both upward (activations flowing from inputs to outputs) and backward (gradients flowing from outputs to inputs).
-
-% 		[Xavier10] => Y. Bengio, X. Glorot, Understanding the difficulty of training deep feedforward neuralnetworks, AISTATS 2010
-
-
-
 \section{Configuration setup}
 	
 	We've chosen to run the neural network under python. In this section we'll see how to set-up the machine. Our machine is based on Linux. It has been reset and installed from scratch for the purpose of the project. We will see how to install python and its dependencies for the neural network. Then is described how to set up the computer so that it can compute matrix math on the Nvidia graphic card with CUDA. And finally how to use other computers to do our math.

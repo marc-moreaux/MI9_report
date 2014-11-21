@@ -13,41 +13,45 @@
 
 	\subsection{Data}
 	\label{sec:dataset}
-		In \fref{fig:FeatureExtraction1} you see a letter. This letter has been analised and anotated with  many blocks. Those blocks can represent a class like, for example, a date. All these blocks are our samples for predicting the classes.
+
+		In \fref{fig:FeatureExtraction1} you see a letter. For the Kaggle competition this letter has been analyzed and annotated with many blocks. Those blocks represent classes like, for example, a date, a page number or a name. All these blocks are our samples. The aim of the competition is to extract the common patterns of each classes to predict a new candidate. This task is called multi-label classification. 
+
+		Below, we are first going to describe what are features corresponding to those boxes. Then we will describe the labels or the classes a box can belong to. And we will finish by describing the files also provided by the competition.		
+
+		\begin{figure}[h]
+			\begin{center}
+				\includegraphics[width=0.9\textwidth]{FeatureExtraction1.png}
+			\end{center}
+			\caption{document segmentation from Kaggle website 
+			\label{fig:FeatureExtraction1}}
+		\end{figure}
 
 		\subsubsection{features}
-			A sample block is represented by 145 features. Those features include content, parsing, spatial and relational information.
+			A sample block is represented by 145 features. Those features include content feature, parsing feature, spatial feature and relational information features.
 
 			\begin{itemize}
-				\item Content feature is about the raw text of the sample. The raw text have been hashed into another text.
-				\item Parsing feature indicates which kind of caracters are present in the sample text. It can be for instance alphanumeric, numeric or text caracters.
-				\item Spacial feature is about postion and size of the block in the document.
-			 	\item Relational feature descibe the hierarchie of the blocks. If a block has no parent, this value will be empty.
-	\end{itemize}
+				\item The first feature we have is "Content feature". This feature is the direct representation of the text in a hashed format.
+				\item The second feature is "Parsing feature". It indicates which kind of characters are present in the sample text. It can be for instance alphanumeric, numeric or text characters.
+				\item Then come some "Spacial feature". This is about position and size of the block in the document.
+			 	\item Finally, "Relational feature". They describe the hierarchies of the blocks. If a block has no parent, this value will be empty.
+			\end{itemize}
 
-		To these features correpond a value. It can either be a real number, a discrete number, a boolean value or a text.
+			To these features can correspond either a value or nothing. If we have a value, it is either a real number, a discrete number, a boolean value or a text value. 
 
-
-	\begin{figure}[h]
-		\begin{center}
-			\includegraphics[width=0.9\textwidth]{FeatureExtraction1.png}
-	    \end{center}
-		\caption{document segmentation from Kaggle website \label{fig:FeatureExtraction1}}
-	\end{figure}
 
 		\subsubsection{label}
-			Any sample is related to a label or more. This is the aim of the project: labelling the samples. As mentioned previously a label could for instance be 'date' or 'pageNumber'. The competition provide 33 labels. Those labels are not explicit, we don't know what they correspond to.
+			Any sample is related to a label or more. This is the aim of the project: labeling the samples. As mentioned previously a label could for instance be 'date' or 'pageNumber'. The competition provide 33 labels. Those labels are not explicit, we don't know what they correspond to.
 
-			To a given sample is associated a 33d label vector with values 0 or 1. As there can be many labels, the vector size is not necessary 1. \fref{fig:labelcsv} shows an example of a sample labelling.
+			To a given sample is associated a 33d label vector with values 0 or 1. As there can be many labels, the vector size is not necessary 1. \fref{fig:labelcsv} shows an example of a sample labeling.
 
 
 		\subsubsection{files}
 			The data provided for this competition by Tradeshift consist of 3 csv files. 
 
 			\begin{itemize}
-				\item train.csv: File containing the training data. It has mearly 1.7m lines of samples and 145 columns of features. Each cell has a either a real, a discrete, a boolean or a text value.
-				\item trainLabels.csv: File containing label of data. It has a 3D array with mearly 1.7m lines of samples, 33 columns of labels and each cell is either 0 or 1.
-				\item test.csv: File containing the testing data. It has mearly 0.4m lines of samples and 145 columns of features. Each cell has a either a real, a discrete, a boolean or a text value.
+				\item train.csv: File containing the training data. It has merely 1.7m lines of samples and 145 columns of features. Each cell has a either a real, a discrete, a boolean or a text value.
+				\item trainLabels.csv: File containing label of data. It has a 3D array with merely 1.7m lines of samples, 33 columns of labels and each cell is either 0 or 1.
+				\item test.csv: File containing the testing data. It has merely 0.4m lines of samples and 145 columns of features. Each cell has a either a real, a discrete, a boolean or a text value.
 			\end{itemize}
 
 
@@ -55,9 +59,9 @@
 	\subsection{evaluation}
 		The work is evaluated by sending a csv file on the kaggle website. The csv file is then evaluated by the system.
 
-		The csv file 'sampleSubmission.csv', is a 2 column csv file. On the first column is listed the sample number and a label and on the second column a prediction corresponding to this tupple {sample,label}.
+		The csv file 'sampleSubmission.csv', is a 2 column csv file. On the first column is listed the sample number and a label and on the second column a prediction corresponding to this tuple {sample,label}.
 
-		Once submited, the file receive a score through a scoring function. The fuction scoring used is the negative logarithm of the likelihood, averaged over $N_t$ test samples and $K$ labels.
+		Once submitted, the file receive a score through a scoring function. The function scoring used is the negative logarithm of the likelihood, averaged over $N_t$ test samples and $K$ labels.
 		Mathematically, this function is defined as follow:
 
 		\begin{equation} \label{eq1}
@@ -70,20 +74,6 @@
 
 		This function gives an extreme punishment for wrong confident predictions. 
 
-		For instance, the logloss of one sample with one label predicting 0.001 intead of 1 (an extrealy confident wrong prediction) is $-\log(0.001) = 3 $ whereas the logloss of one sample with one label predicting 0.1 intead of 1 (a less confidently wrong prediction) is $\log(0.1) = 1$
-
-
-
-
-
-	\subsection{Background}
-		We aim at solving this problem learning a deep neuronal network.
-
-
-		As proposed on the competition forum, the text input from the hash code, will be translated into a single binary entry. In other terms, a hash code looking like 'ASddeF54(fd=' will take a binary value '1001'. After formating those kind of inputs, the neural network will have a hash embedding layer with redundancy over the hash input layer. This layer will ensure an understanding of hash vocabulary code by the network. 
-
-		As any features has a defined functions, we will try some different architectures of network. We will try to find the content, spacial, relational or parsing features to group them in for new embeding layers.
-
-		Once those layers are defined, a last hidden layer will merge the results find an optimal answer for the stated problem.
+		For instance, the log-loss of one sample with one label predicting 0.001 instead of 1 (an extremely confident wrong prediction) is $-\log(0.001) = 3 $ whereas the log-loss of one sample with one label predicting 0.1 instead of 1 (a less confidently wrong prediction) is $\log(0.1) = 1$
 
 
