@@ -143,48 +143,6 @@
 
 	Now that we saw how the back propagation was applied in a simple chain of nodes, we will see how does it do in a more general case of deep neural network fully connected. Now, the cost-function takes multiple parameters, there is many hidden layers and an input layer of many variables. \Fref{fig:back_prop2} shows an illustration of this generic network where $u_i = f_i(u_j)$ with $j \in parents(i)$.
 
-	% The algorithm works as follow:
-	% We want to figure out if the parameter (weights) we have learned so far are correct (which they must likely aren't). If they are incorrect we want to modify them so they diminish the error of our network.
-	% First step, we compute the error of our network with forward propagation of the input.
-
-	% \begin{algorithm}[H]
-	% 	\KwData{the inputs x are given to the algorithm}
-	% 	\KwResult{returns the error given the weight }
-	% 	\BlankLine
-	% 	\emph{\% Initialize the algorithm, $U_0$ is the inputs}\;
-	% 	$U_0 \leftarrow x$\;
-	% 	\emph{\% forward propagate input signal to output layer}\;
-	% 	\For{$i \leftarrow 1$ \KwTo $N$}{
-	% 		$U_i \leftarrow f_i(U_{i-1})$\;
-	% 	}
-	% \caption{Forward propagation}
-	% \label{alg:forward_propagation}
-	% \end{algorithm}
-	
-	% Then we back-propagate the error to get the gradient of the error function in terms of its weights. We do this using the chain rule seen above. 
-	% We take a little step down the error modifying the weights on the network.
-
-	% \begin{algorithm}[H]
-	% 	\KwData{the inputs x are given to the algorithm}
-	% 	\KwResult{returns a set of partial derivatives for every hidden nodes}
-	% 	\BlankLine
-	% 	\emph{\% Initialize the algorithm}\;
-	% 	$\frac{\partial U_N}{\partial U_N} \leftarrow 1$\;
-	% 	\emph{\% back propagate error throughout the network}\;
-	% 	\For{$j \leftarrow N-1$ \KwTo $1$}{
-	% 		$\frac{\partial U_N}{\partial U_j} \leftarrow 
-	% 			\frac{\partial U_N}{\partial U_{j+1}} \frac{\partial f_j(U_{j+1}}{\partial U_{j+1}}$\;
-	% 	}
-	% \caption{Back propagation}
-	% \label{alg:back_propagation}
-	% \end{algorithm}
-	
-
-	% We first compute the forward message, in other terms, we compute the output of our actual network given the actual parameters $\theta$. It is straight forward, 
-
-
-	% To compute the gradient of the cost-function in the network, 
-
 
 	The algorithm works as follow:
 	We want to figure out if the parameter (weights) we have learned so far are correct (which they must likely aren't). If they are incorrect we want to modify them so they diminish the error of our network. We consider the network represented on \fref{fig:back_prop2}. As always, we have an input vector $x$ and an output (prediction) layer $t$. We then have some hidden layers. $x_j^{(n)}$ where $n \in [0,N]$ is the layer number and $j$ is the index of the neuron in the layer. We also denote $w_{ji}$ the weight from neuron $x_i^{(n-1)}$ to neuron $x_j^{(n)}$.
