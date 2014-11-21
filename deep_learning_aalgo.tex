@@ -192,7 +192,7 @@
 	The first step of the algorithm is to compute the error of our network. We do it using forward propagation. The idea is to compute the cost function going through all neurons beginning from the input layer up to the output layer. So we should update the neurons following the next formula:
 
 	\begin{equation}
-		x_j^{(n)} = g^{(n)}(h_j^{(n)}
+		x_j^{(n)} = g^{(n)}(h_j^{(n)})
 	\end{equation}
 
 	We begin at $n=1$ and go iteratively up to $n=N$. Therefore, the $n^{th}$ result can take the advantage of the $(n-1)^{th}$ result computed on a preceding step.
@@ -218,7 +218,10 @@
 	\label{alg:back_propagation}
 	\end{algorithm}
 	
-	We can notice here that in the general case we assumed above (for $h = \sum_i w_{ji}^n w_i^{[n-1)}$), the update formula become: $e_j^{(n-1)} \leftarrow g'^{(n-1)}(h_j^{(n-1)}) \sum_{i\in parent(j)} w_{ji} e_i^{n}$. \\
+	We can notice here that in the general case we assumed above (for $h = \sum_i w_{ji}^n w_i^{[n-1)}$), the update formula become: 
+	\begin{equation}
+		e_j^{(n-1)} \leftarrow g'^{(n-1)}(h_j^{(n-1)}) \sum_{i\in parent(j)} w_{ji} e_i^{n}
+	\end{equation}
 	The last step of the algorithm is to update the weights of the vector so that its error can diminish. The update formula is: $\Delta w_{ij}^n = \lambda e_i^{(n)} x_j^{(n-1)}$ where $\lambda$ is the learning rate.
 
 
