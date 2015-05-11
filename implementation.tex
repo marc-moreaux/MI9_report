@@ -1,0 +1,115 @@
+
+
+\section{Logistic regression implementation}
+\label{logistic_regression_implementation}
+
+
+	For the project, a Python implementation\footnote{All the code is available at \url{https://github.com/marc-moreaux/text_classification}} has been realized. The original structure of the code comes from another python code found on the \textit{kaggle website}\footnote{\url{https://www.kaggle.com/c/tradeshift-text-classification/forums/t/10537/beat-the-benchmark-with-less-than-400mb-of-memory}} This code implements the FTPRL mentioned above. Also, the implementation permits the algorithm to train on two types of inputs: 
+	\begin{itemize}
+		\item On a vector of real number.
+		\item And on a set of highly dimensional binary vector of length one (a vector with many 0 and a single 1).
+	\end{itemize}
+
+	Section \ref{sec:preprocessing} present how some of the initial features descried on section \ref{sec:competition} have been modified to these highly dimensional binary vector.
+
+
+
+
+	\subsection{Implementing the model}
+		To learn the weights of our model we use the learning algorithm described previously: the FTPRL. It minimizes the negative log-likelihood function describing the performance of our model. FTPRL consider an example at a time, it's stochastic : "The derivative based on a randomly chosen single example is a random approximation to the true derivative based on all the training data" \cite{elkan2013maximum}.
+		
+		The precise description of the FTPRL algorithm is given on the Algorithm-1 of \cite{mcmahan2013ad}. Our implementation directly follows it.
+		
+		\vspace{\baselineskip}
+		This is how the model works : 
+		\begin{itemize}
+			\item Initialize the weights with a random distribution.
+			\item Run Algorithm-1 of \cite{mcmahan2013ad}, but after 6k steps :
+			\item Check every 1k steps on validation set if you perform at least 2\% better than before. If not, stop.
+			\item Compute the negative log-likelihood on the testing set.
+		\end{itemize}
+		Even though FTPRL is normalized, we use an early stopping method. This early stopping method permit on the one side to avoid over-fitting and, on the other side, it lowers the training time.
+		
+		The validation and testing set mentioned just before are composed by 20\% of the original data each. It leads to a training set of 60\% of the original dataset.
+
+		After describing the model, we describe the possible input samples.
+
+
+	\subsection{An input of real numbers}
+		Here we describe the normal implementation of the logistic regression model seen on section \ref{sec:logistic_regression}. On that section we saw that the prediction was defined as: 
+
+		$$ \sigma(\beta,x) = \frac{ 1 }{1 + e^{\beta^T x_i} } $$
+
+		Because our models predicts 33 values, $\beta$ is now the weight matrix ($n \times 33$) applied to the vector $x_i$. In the code, $\beta$ is a 2 dimension array of size $33 \times n$ and x is a 1 dimension array of size $n$. the prediction function is described on algorithm \ref{alg:pred_real}.
+
+		The update function takes into consideration the FTRL-proximal algorithm and is also described on the algorithm \ref{alg:pred_real}.
+
+
+		\begin{algorithm}[H]
+			\KwData{ The function receives an input array of real values (x of size n), a weight array of binary values (w of size n $\times$ 33) and an integer label id (lbl). }
+			\KwResult{ Prediction of the model given the inputs }
+			\Begin{
+				pred = 0\;
+				\For{ i in 0:n}{
+					pred $\leftarrow$ x[i] * w[lbl][i]\;
+				}
+				pred $\leftarrow$ $\frac{1}{1+e^{-pred}}$\;
+				return pred \;
+			}
+
+
+			\KwResult{ Update the weight of the model given the previously mentioned Data}
+			\Begin{
+				\For{ i in 0:n}{
+					dim\_param[label][i] $\leftarrow$ update\;
+					w[label][i] $\leftarrow$ w[label][i] -  dim\_param[label][i] * x[i] * f'(p,y) \;
+				}
+			}
+			\caption{Prediction and Update for input vector of real number}
+			\label{alg:pred_real}
+		\end{algorithm}
+
+
+	\subsection{An input of highly dimensional binary vector of length one}
+		The second implementation of the algorithm is a twisted one allowing a highly dimensional binary vector as input. This vector have many 0 and one 1 (eg. a feature with value $1.23$ could become 000000100). On the implementation, these binary vectors can have more than a million dimension. Due to that increase in parameters, the training algorithm \ref{alg:pred_real} couldn't work efficiently as it became too slow.
+
+		As a solution to this problem, we used an other representation of the inputs. Instead of using the highly dimensional binary vector, we only saved the index of the '1' in a table. On the example seen before, the $1.23$ became 000000100 and now is saved as 6, as 6 is the index of the '1' in the binary vector. The algorithm corresponding to this twist is presented on algorithm \ref{alg:bin_real}.
+
+		\begin{algorithm}[H]
+			\KwData{ The function receives an input array of integer values (x of size n), a weight array of real values (w of size n $\times$ 33) and an integer label id (lbl). }
+			\KwResult{ Prediction of the model given the inputs }
+			\Begin{
+				pred = 0\;
+				\For{ i in 0:n}{
+					pred $\leftarrow$ 1 * w[lbl][ x[i] ]\;
+				}
+				pred $\leftarrow$ $\frac{1}{1+e^{-pred}}$\;
+				return pred \;
+			}
+
+			\KwResult{ Update the weight of the model given the previously mentioned Data}
+			\Begin{
+				\For{ i in 0:n}{
+					dim\_param[label][i] $\leftarrow$ update\;
+					w[label][i] $\leftarrow$ w[label][i] -  dim\_param[label][i] * 1 * f'(p,y) \;
+				}
+			}
+			\caption{Prediction and Update for input vector of real number}
+			\label{alg:bin_real}
+		\end{algorithm}
+
+
+	\subsection{Feature selection}
+		We also decided that we wouldn't train our model on all the available feature we have. Therefore we used a feature selector algorithm. 
+
+		Our algorithm is a greedy Forward Sequential Selection (FSS). The FFS algorithm "selects a subset of features from the data matrix X that best predict the data y by sequentially selecting features until there is no improvement in prediction" \cite{matlab_fss}. This algorithm is described in paper \cite{aha1996comparative}.
+
+		In the literature, Backward Sequential Selection (BSS) is preferred to FSS. In our project, the reason for using FSS instead of BSS is related to the memory of our computer. If we were to use the BSS we would need to train our model on the set composed by all the binary vectors (and more). This would impose the computer to store a weight matrix of $10 \times 33$ million floating parameters. The computer used for testing didn't have that memory capacity. 
+
+		We stop accepting new features after we have 15 of them or when accepting a new feature doesn't increase the accuracy of the model of more than 2\%.
+
+		We call the model (or process) composed by the FSS and the FTPRL algorithm: FSSFTPRL.
+
+		
+
+

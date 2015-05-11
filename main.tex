@@ -9,15 +9,18 @@
 \usepackage{listings}
 \usepackage{url}
 \usepackage{amssymb}
+\usepackage{rotating}
 
 \usepackage{tikz}
-\usepackage[ruled,linesnumbered]{algorithm2e}
+\usepackage[ruled,linesnumbered,vlined]{algorithm2e}
 
 \usepackage{verbatim}
 
 \newcommand{\norm}[1]{\left\lVert#1\right\rVert}
+\newcommand{\argmin}{\arg\!\min}
 
-\title{Text classifiation}
+
+\title{Text classification with generic Logistic-Regression classifier}
 
 \author{Marc Moreaux}
 
@@ -26,13 +29,143 @@
 \begin{document}
 \maketitle
 
+% 
+
+
+\section{Introduction}
+	On the 9th semester, in the computer science department of Aalborg university, students are asked to work on a subject related to their specialization. As the student involved on this report is specializing in Machine Learning, the problematic of the thesis will be related to it.
+
+
+	\subsection{Research objective}
+		For this semester, I want to focus on the possibility to train a classifier from a dataset of unknown nature. In other words: There is some challenges existing where an operator has no idea on the dataset he receives. Because of this issue, he can't apply state of the art techniques to train a classifier. During this semester I want to find a dataset of unknown nature and train it with standard, re-applicable methods. Obviously, there'll be some constrains on the dataset and the classifier won't be able to learn any dataset.
+
+
+	\subsection{Problem description}
+		For this research objective, we needed a dataset with little information. We picked one provided on the \textit{kaggle} competition website \footnote{\url{http://www.kaggle.com/}}. On this website, a company named \textit{Tradeshift} proposed a multi-label classification problem. Competitors have to propose a coded solution to transform an input into a binary output. The inputs of this competition represent elements of a text-document like a date or a name. In section \ref{sec:competition} we give a broader explanation on this inputs as described by \textit{Tradeshift} and in section \ref{sec:personal_analyze} we dig into and present some possible meaning of the inputs.
+
+		The unknown nature of the features in the dataset doesn't permit us to use a straight forward method to feature-engineer them. In this report we propose a specific implementation of a logistic regression algorithm able handle a large number of inputs. This model implementation is presented on section \ref{sec:model} and \ref{sec:personal_analyze} whereas the performance of that model given some hand-engineered inputs are presented on section \ref{sec:preprocessing}.
+
+	\subsection{Motivations}
+		I have two main reasons to pick a competition. The first reason is the desire to answer to a real world problem : to work on a subject where a company needs a solution for its business. The second reason is to see how companies can outsource their scientific production to a scientific community.
+		
+		About electing this particular competition, and as mentioned previously, I was motivated by having dataset with very few information about it. In other words I liked to know that we couldn't apply, with certainty, the state of the art feature-engineering methods on the dataset because we didn't knew, with certainty, what was those features.
+
+		I chose a competition from the \textit{kaggle} website because it's a qualitative platform hosting this type of events where the input data, the output data and the evaluation criterion are always presented in a very comprehensible way.
+
+		Finally my motivation on this research objective is that features often needs to be hand-engineered to feed a model. Here, we propose a lot of automatically-made features to a model and the model will choose the features it best perform with.
+
+
+
+
 
 \include{competition}
+\include{perso_analyze}
+\include{model}
+\include{implementation}
 \include{preprocessing}
-% \include{motivation_of_choices}
-\include{deep_learning_aalgo}
+\include{conclusion}
 
-\include{paper_presentation}
+
+
+
+\begin{sidewaystable}
+    \centering
+	\begin{tabular}{ccccccccccc}
+
+		id & x1 & x2 & x3 & x4 & x5 & x6 & x7\\ 
+		1 & NO & NO & dqOiM6y(...)8= & GNjrXXA(...)= & 0.57656116338 & 0.073139435414 \\
+		\hline
+
+		x8 & x9 & x10 & x11 & x12 & x13 & x14 & x15 \\
+		0.11569717707 & 0.47247428917 & YES & NO & NO & NO & NO & 42 \\
+		\hline
+
+		x16 & x17 & x18 & x19 & x20 & x21 & x22 & x23 \\
+		0.3960650128 & 3 & 6 & 0.99101796407 & 0 & 0.82 & 3306 & 4676 \\
+		\hline
+
+		x24 & x25 & x26 & x27 & x28 & x29 & x30 & x31 \\
+		YES & NO & YES & 0 & 0.40504704875 & 0.46460980036 & NO & NO \\
+		\hline
+
+		x32 & x33 & x34 & x35 & x36 & x37 & x38 & x39 \\
+		NO & NO & mimucPm(...)= & s7mTY62(...)= & 0.57656116338 & 0.073139435414 & 0.48139435414 & 0.11569717707 \\
+		\hline
+
+		x40 & x41 & x42 & x43 & x44 & x45 & x46 & x47 \\
+		0.45856019358 & YES & NO & YES & NO & NO & 9 & 0.36826347305 \\
+		\hline
+
+		x48 & x49 & x50 & x51 & x52 & x53 & x54 & x55 \\
+		2 & 10 & 0.99272882805 & 0 & 0.94 & 3306 & 4676 & YES \\
+		
+
+	\end{tabular}
+	\caption{Extract of 50 (out of 145) features of sample with ID 1 given by \textit{Tradeshift} }
+	\label{fig:inputVector}
+\end{sidewaystable}
+
+
+\begin{sidewaystable}
+    \centering
+	\begin{tabular}{ccccccccccccccccccccccccccccc}
+		x1 & x2 & x3 & x4 & x5 & x6 & x7 & x8 & x9 & x10 & x11 & x12 & x13 & x14 & x15 \\ x16 & x17 & x18 & x19 & x20 & x21 & x22 & x23 & x24 & x25 & x26 & x27 & x28 & x29 \\
+		NO & NO & dqOiM6(...)= & GNjrXX(...)= & 0.57656 & 0.07313 & 0.48139 & 0.11569 & 0.47247 & YES & NO & NO & NO & NO & 42 \\ 0.39606 & 3 & 6 & 0.99101 & 0 & 0.82 & 3306 & 4676 & YES & NO & YES & 0 & 0.40504 & 0.464609 \\
+
+		\hline
+		x32 & x33 & x34 & x35 & x36 & x37 & x38 & x39 & x40 & x41 & x42 & x43 & x44 & x45 & x46 \\ x47 & x48 & x49 & x50 & x51 & x52 & x53 & x54 & x55 & x56 & x57 & x58 & x59 & x60 \\
+		NO & NO & mimucP(...)= & s7mTY6(...)= & 0.57656 & 0.07313 & 0.48139 & 0.11569 & 0.45856 & YES & NO & YES & NO & NO & 9 \\ 0.36826 & 2 & 10 & 0.99272 & 0 & 0.94 & 3306 & 4676 & YES & NO & YES & 1 & 0.3755 & 0.451300 \\
+
+		\hline
+		x62 & x63 & x64 & x65 & x66 & x67 & x68 & x69 & x70 & x71 & x72 & x73 & x74 & x75 & x76 \\ x77 & x78 & x79 & x80 & x81 & x82 & x83 & x84 & x85 & x86 & x87 & x88 & x89 & x90 \\
+		NO & NO & Op+X3a(...)= & GeerC2(...)= & 0.57656 & 0.07313 & 0.48139 & 0.11569 & 0.48759 & YES & NO & NO & NO & NO & 42 \\ 0.36313 & 6 & 10 & 0.98759 & 0 & 0.71 & 3306 & 4676 & YES & NO & YES & 0 & 0.3755 & 0.479733 \\
+
+		\hline
+		x92 & x93 & x94 & x95 & x96 & x97 & x98 & x99 & x100 & x101 & x102 & x103 & x104 & x105 & x106 \\ x107 & x108 & x109 & x110 & x111 & x112 & x113 & x114 & x115 & x116 & x117 & x118 & x119 & x120 \\
+		NO & NO & +dia7t(...)= & f4Uu1R(...)= & 0.57656 & 0.07313 & 0.48139 & 0.11569 & 0.47307 & YES & NO & NO & NO & NO & 37 \\ 0.33361 & 4 & 6 & 0.98716 & 0 & 0.89 & 3306 & 4676 & YES & NO & YES & 1 & 0.34644 & 0.464609 \\
+
+		\hline
+		x30 & x31 & x61 & x91 & x121 & x122 & x123 & x124 & x125 & x126 & x127 & x128 & x129 & x130 & x131 \\ x132 & x133 & x134 & x135 & x136 & x137 & x138 & x139 & x140 & x141 & x142 & x143 & x144 & x145 \\
+		NO & NO & +2TNtX(...)= & bxU52t(...)= & 0.57656 & 0.07313 & 0.48139 & 0.11569 & 0.47307 & YES & NO & NO & NO & NO & 42 \\ 0.36313 & 5 & 6 & 0.98759 & 0 & 0.81 & 3306 & 4676 & YES & NO & YES & 2 & 0.3755 & 0.464609 \\
+	\end{tabular}
+	\caption{First sample in a five bloc format}
+	\label{fig:sample1_block}
+\end{sidewaystable}
+
+
+
+\begin{tabular}{cccc}
+	3  \includegraphics[width=0.4\textwidth]{figure_a3.png}  	&
+	4  \includegraphics[width=0.4\textwidth]{figure_a4.png}  	\\
+	5  \includegraphics[width=0.4\textwidth]{figure_a5.png}  	&
+	6  \includegraphics[width=0.4\textwidth]{figure_a6.png}  	\\
+	7  \includegraphics[width=0.4\textwidth]{figure_a7.png}  	&
+	8  \includegraphics[width=0.4\textwidth]{figure_a8.png}  	\\
+	9  \includegraphics[width=0.4\textwidth]{figure_a9.png}  	&
+	15 \includegraphics[width=0.5\textwidth]{figure_a15.png}  	\\
+	16 \includegraphics[width=0.4\textwidth]{figure_a16.png} 	&
+	17 \includegraphics[width=0.4\textwidth]{figure_a17.png} 	\\
+	18 \includegraphics[width=0.4\textwidth]{figure_a18.png} 	&
+	19 \includegraphics[width=0.4\textwidth]{figure_a19.png} 	\\
+	\label{fig:data_distribution1}
+\end{tabular}
+
+\begin{tabular}{cccc}
+	20 \includegraphics[width=0.4\textwidth]{figure_a20b.png} 	&
+	21 \includegraphics[width=0.4\textwidth]{figure_a21.png} 	\\
+	22 \includegraphics[width=0.4\textwidth]{figure_a22.png} 	&
+	23 \includegraphics[width=0.4\textwidth]{figure_a23.png} 	\\
+	27 \includegraphics[width=0.4\textwidth]{figure_a27.png} 	&
+	28 \includegraphics[width=0.4\textwidth]{figure_a28.png} 	\\
+	29 \includegraphics[width=0.4\textwidth]{figure_a29.png} 	&
+	27 \includegraphics[width=0.4\textwidth]{figure_a27.png} 	\\
+	27 \includegraphics[width=0.4\textwidth]{figure_a27.png} 	&
+	\label{fig:data_distribution2}
+\end{tabular}
+
+
+
+
 
 
 \bibliographystyle{plain}
@@ -42,3 +175,40 @@
 
 
 \end{document}
+
+
+% https://www.cs.princeton.edu/courses/archive/spring07/cos424/scribe_notes/0403.pdf
+% didn't took much from there
+
+% http://cseweb.ucsd.edu/~elkan/250B/logreg.pdf
+% usefull paper in sdg and logistic regression
+
+% http://static.googleusercontent.com/media/research.google.com/fr//pubs/archive/41159.pdf
+% Where the algorithm comes from (with L1, L2 regularizer)
+
+% http://www.matthewzeiler.com/pubs/googleTR2012/googleTR2012.pdf
+% alpha delta method, not used
+
+% http://www.spencegreen.com/pubs/green+wang+cer+manning.acl13.pdf
+% Adagrad + fobos + L1
+
+% https://kaggle2.blob.core.windows.net/forum-message-attachments/58054/1753/fast_solution_v3.py?sv=2012-02-12&se=2015-01-11T15%3A22%3A11Z&sr=b&sp=r&sig=ZZEcoVuo6nnwxuv7nmpA7p7AHRg2YFqmsapfGojG1xY%3D
+% implementation on kaggle
+
+
+% http://media.hsph.edu.vn/sites/default/files/Statistics%20eBook%20-%20Hosmer,%20Lemeshow%20-%20Applied%20Logistic%20Regression.pdf
+% BOOK for logistic regression
+
+
+
+
+% Look at for regularization
+% http://web.stanford.edu/~jduchi/projects/DuchiSi09c_slides.pdf
+% http://web.stanford.edu/~jduchi/projects/DuchiSi09c.pdf
+% http://www.ecore.be/DPs/dp_1191313936.pdf
+% http://www.jmlr.org/papers/volume11/xiao10a/xiao10a.pdf
+% http://arxiv.org/pdf/1009.3240.pdf
+
+% classes source 
+% http://www.cs.cmu.edu/~ggordon/10725-F12/schedule.html
+

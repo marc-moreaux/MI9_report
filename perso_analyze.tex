@@ -1,0 +1,45 @@
+\section{Analysis of the input data}
+\label{sec:personal_analyze}
+	In this section we have a closer look on the input data and we try to bring up some interesting hypothesis given the few informations we have.
+
+	The training data is composed of 1.7 million samples. Each samples has 145 features. As described in section \ref{sec:competition} the features can either be a content feature, a parsing feature, a spacial feature or a relational feature and they can be real, discrete, boolean, text or no valued. In order to analyze all the features we quantified all of them.
+
+	\subsection{Input quantification}
+		The ai here is to give a real (or integer) value to eachone of the features. If we take the example visible on \fref{fig:sample1_block}, the features 1-4, 7, 10-14, 24-27, 30-35, 41-45 and 55 are non numerical. We modified these inputs as follow:
+		\begin{itemize}
+			\item The YES/NO values were transformed to -1/1.
+			\item The empty values were transformed to 0.
+			\item And, as there is 986'837 different hash-codes in both the training and testing samples, the hash-codes were transformed to an index integer in range [1;986837].
+		\end{itemize}
+		This transformation holds for the rest of the paper.
+
+	\subsection{Five blocs}
+
+		Taking a closer look at the data, one can notice that each features seems to be repeated 5 times. There is 10 hash features, 50 binary features, 50 real features and 35 integer features per samples. All these numbers are divisible by 5. When looking at the composition of the data, the columns were approximately matching. In other words, features 1 to 29 had the same data types in the same order than the features 32 to 60, than feature 62 to 90, than feature 92 to 120 and than features 30, 31, 61, 91, and 121 to 145. The first data sample has been reformatted to feat this observation and is visible on \fref{fig:sample1_block}. For simplicity we will now always mention the features as they are ordered in that figure. In other words, the five blocs are now referred as features \{1 to 29\}, \{30 to 58\}, \{59 to 87\}, \{88 to 116\} and \{117 to 145\}.
+
+		After this observation, an other argument came in favor of this hypothesis: on the competition's website, the authors mentioned that the relational data included information about the surrounding text blocks in the original document. If there were not that surrounding text block (e.g. a text block in the top of the document wouldn't have any other text block upper than itself) it's features would be empty (\textit{no-value}). Looking at the input file, we could see that some of the five blocs mentioned right before were some times lacking values for all of their features. For instance, the sample number 2 given in 'train.csv' has features \{1 to 29\} equal to $-1$ or to a \textit{no-value}.
+
+		From here we had a new argument in favor of the 5 blocs hypothesis and a new one concerning the meaning of these blocs. Each one of the five blocs would represent an element (e.g. a title or a date). And their order of apparition in the feature order correspond to a specific hierarchical neighbor. Because the last of the five blocs (\{117 to 145\}) were never no-valued, we believed that this block was the data to classify.
+
+	\subsection{features}
+	\label{sec:features}
+		We keep the \textit{5 blocs hypothesis} as true. We now have $145/5 = 29$ different features.
+
+		We are going to see the data distribution of some of these features. To understand how the data distribution was rendered we will consider an example: the distribution of the feature 1. We collect all the samples of features 1, 30, 59, 88 and 117 (which correspond to the first feature of each bloc) and count the amount of time each of the values are repeated. The samples are taken from both the training set and the testing set, there is 2.1 million samples. On \fref{fig:data_distribution1} and \fref{fig:data_distribution2} are represented all the hashes, real and integer features. The binary features (yes/no) are not represented. The reason for this absence is that the plot only showed that both of the YES and the NO data were used.
+
+		Taking a closer look at the features 3 and 4 (the hashed features), we notice that there is merely half less hash values than samples ($0.98 / 2.1$). Furthermore, there is 0.98 million hashes for $2.1*5=10.5$ millions hash entries. From this observation we understand that there is redundancy in the use of hash-values. Later we will see how we tried to take advantage of the redundancy. We also notice that few hashes (the first values on the plot) are extremely present on all the features.
+
+		Comes after the integer and float valued features:
+		\begin{itemize}
+			\item Features 15, 17, 18 and 27 all are integer features. They exist in the range of positive natural numbers and their low values are frequently used.
+			\item Features 22 and 23 are also integer features. They exist in the range of positive natural numbers and few of its values are often reused.
+			\item Features 6, 7 are float features. They are in range [0,1].
+			\item Features 5, 8 are float features. They are in range [0,3]. As they come for together and seeing their distribution, we could believe that features 5, 6, 7, 8 represent positions relative to a page-width and page-height.
+			\item Feature 9, 16, 28, 29 are float feature. They have most of their values in range [0,1] but few exists outside of this bounds.
+			\item Feature 19 and 21 are also float features. Feature 19 is in [-0.5,1] and feature 21 is in range [0,1]
+		\end{itemize}
+		
+		Seeing those distributions doesn't help much on understanding what is the feature meaning.
+
+
+

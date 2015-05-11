@@ -1,0 +1,215 @@
+
+
+
+\section{Model}
+\label{sec:model}
+	
+	In this section we describe the theory needed for the model we use in our project. We describe, the model, the training criterion, the convergence algorithm and the regularization term we use.
+	
+
+	\subsection{Logistic regression model}
+	\label{sec:logistic_regression}
+		The model is a logistic regression. To better understand this model, we define the two words:
+
+		\begin{itemize}
+			\item Regression: Regression is a set of statistical methods often used to analyze the relation of a variable towards one or many others.
+			\item Logistic: A variable is called logic, if it varies in between a true and a false state. A logistic function represent this variation through a function $f:\mathbb{R} \rightarrow [0,1] $. The standard logistic function is called sigmoid and is defined as:
+			$$ \sigma(x) = \frac{1}{1+e^{-x}} $$
+		\end{itemize}
+
+		Therefore a logistic regression model aims at guessing the state of a logic variable $Y \in \{True;False\}$ knowing the states of many other inputs $X \in \mathbb{R}^n$.
+
+
+		The descriptions that follows is inspired form both a book \cite{hosmer2004applied} and a paper \cite{elkan2013maximum}. \Fref{fig:logistic_model} is a representation of  a logistic regression model.
+
+		\begin{figure}
+			\centering
+			\def\layersep{3em}
+
+			\begin{tikzpicture}[shorten >=1pt,->,draw=black!50, node distance=\layersep]
+				\tikzstyle{every pin edge}=[<-, thick,shorten >=1pt]
+				\tikzstyle{neuron}=[circle,draw=black, very thick,,minimum size=1.5em,inner sep=0em]
+				\tikzstyle{annot} = [text width=9em, text centered]
+				\tikzstyle{annot2} = [text width=6em, text centered]
+
+				
+				% --------------
+				%   Draw nodes
+				% --------------
+				\node[neuron] (O) at (3.5,\layersep*1) {}; % Draw output node
+				
+				\foreach \name / \y in {1,...,5} % Draw the input nodes
+					\node[neuron] (I-\name) at  (\y+0.5,\layersep*0) {};
+
+				% -----------------
+				%   Connect nodes
+				% -----------------
+				\foreach \source in {1,...,5} % connect hidden4 & out
+					\path (I-\source) edge (O);
+
+				% Annotate the layers
+				\node[annot] at (-1,\layersep*1) {Output layer};
+				\node[annot] at (-1,\layersep*0) {Input layer};
+				% \node[annot2] () at (5,\layersep*4) {$u_i = f_i(u_j)$};
+				% \node[annot2] () at (5,\layersep*3) {$u_j$};
+
+			\end{tikzpicture}
+
+			\caption{5 neurons logistic regression model}
+			\label{fig:logistic_model}
+		\end{figure}
+
+		Lets consider we have a set of n samples. $x_i \in \mathbb{R}^m, \forall i \in [1...n]$ is the input vector of dimension $m$ for a sample $n$ and $y_i \in \{0,1\} \forall i \in [1...n]$ is the value to predict corresponding to it. We also note $x_{ij}$ the elements in dimension $j$ of the vector $x_i$.
+
+
+		The objective of a linear regression is to predict the value $y$ of a new input sample $x$. The key value in regression is the conditional mean: $E(Y|X=x)$. You read this quantity as "expected value of $Y$ given $x$" and we'll also refer to it as our "prediction". In order to have a good regression, you want to maximize this quantity. 
+
+		In our model, we multiply each dimension of the input $x_{ij}$ with a parameter $\beta_j$ and then aggregate together the result of this multiplication. If we consider $\beta \in \mathbb{R}^m$ the vector composed of the $\beta_j$ elements, the operation is:
+		$$ g(\beta,x) = \sum_{j=1}^m \beta_j x_{ij}  = \beta^T x_i $$
+		After this step, we use a sigmoid function to reduce the output space to $[0,1]$:
+		$$ \sigma(\beta,x) = \frac{ 1 }{1 + e^{-\beta^T x_i} } = E(Y|X=x_i) $$
+		This function is the one expressing our expected value of $Y$ given $x_i$ (the prediction). We are now going to describe how to maximize this expected value.
+
+
+	\subsection{Maximum log-likelihood \cite{hosmer2004applied}}
+
+		The likelihood function $l(\beta)$ is expressing the the probability of the observed data $x$ as a function of the parameters $\beta$. We want to find the parameters $\beta$ that maximizes the likelihood function.
+
+		The likelihood function is either $P(Y=0|x_i)$ if $y_i=0$ or $P(Y=1|x_i)$ if $y_i=1$. A convenient way to re-write this likelihood for a given sample $(x_i,y_i)$ is:
+		$$ l(\beta_i) = E(Y|x_i)^{y_i} [ 1 - E(Y|x_i) ]^{1-y_i} $$
+		Since the expected values of $Y$ are assumed to be independent, the likelihood function through the dataset is the product of all the sample likelihoods:
+		$$ l(\beta) = \prod_{i=1}^n E(Y|x_i)^{y_i} [ 1 - E(Y|x_i) ]^{1-y_i} $$
+		An easier expression to work with is the logarithm of this likelihood function, the log-likelihood: 
+		$$ \ln(l(\beta)) = \sum_{i=1}^n [y_i\ln[E(Y|x_i)] + (1-y_i)\ln[E(Y|x_i) ] $$
+
+		In machine learning it's common to write the prediction with a hat on the predicted variable: $\hat{y}$. With this notation the log likelihood is written: 
+		$$ \ln(l(\beta)) = \sum_{i=1}^n [ y_i \ln(\hat{y_i})+ (1-y_i)\ln(1-\hat{y_i})] $$
+
+		\vspace{\baselineskip}
+		\textbf{Differentiation of the log-likelihood}
+		We now want to find the parameters that maximizes this log likelihood function or, in other words, that best predict our variable to guess $Y$. To do so, we search for the maximum of the function by differentiating it with respect to its parameter $\beta$ and search for the zeros of this function. To differentiate, we take advantage of the chain rule:
+		\begin{equation}
+			\begin{split}
+				\frac{\partial \ln(l)}{\partial \beta }  = 
+				\frac{\partial \ln(l)}{\partial \hat{y}}
+				\frac{\partial \hat{y}}{\partial h}
+				\frac{\partial h}{\partial \beta}
+			\end{split}
+		\end{equation}
+		Where $h = \beta^T x_i$.
+		knowing that: 
+		\begin{equation}
+			\begin{split}
+			\frac{\partial \ln(l)}{\partial \hat{y}} &=  \sum_{i=1}^n \frac{y_i}{\hat{y}_i} + \sum_{i=1}^n \frac{1-y_i}{1-\hat{y}_i} \\
+			\frac{\partial \hat{y}_i}{\partial h} &= \frac{\partial \sigma(h)}{\partial h} = \hat{y_i} (1-\hat{y}_i) \\
+			\frac{\partial h}{\partial \beta} &= x_i
+			\end{split}
+		\end{equation}
+		We get:
+		$$ \frac{\partial \ln(l)}{\partial \beta }  = \sum_{i=1}^n x_i[y_i(1-\hat{y}_i) + (1-y_i)\hat{y}_i] $$
+		We notice that, when $y_i = 1$, the differential of $ln(l) = \sum_{i=1}^n x_i(1-\hat{y}_i) $ and when $y_i = 0$, the differential of $ln(l) = \sum_{i=1}^n x_i(0-\hat{y}_i) $. Therefore we rewrite:
+		$$ \frac{\partial \ln(l)}{\partial \beta }  = \sum_{i=1}^n x_i(y_i-\hat{y}_i) $$
+		As mentioned, to find the maximum log likelihood we now need to find the zeros of this function.
+		$$ \frac{\partial \ln(l)}{\partial \beta } = 0 $$
+
+		To do so, we use the so-called "gradient descent algorithm".
+
+	\subsection{Gradient descent algorithm}
+
+		Gradient descent is an algorithm aiming at finding the minimum of a function. It's an iterative algorithm improving at each step its chances to be closer to an optimum value.
+
+		Gradient descent works as follow:
+
+		Consider a stricly convex function $f: \mathbb{R}^n \rightarrow \mathbb{R}$ that you want to minimize. In order to minimize this function, you have to find $\nabla f(x) = 0$ where $\nabla f$ is: 
+
+		$$\nabla f = \frac{\partial}{\partial_{x}}f \cdot \vec{i} $$
+
+		To start searching for the minimums of this function, you initialize your algorithm with a given input vector $x^{(0)}$ and a given learning rate $\alpha$. While the termination criteria $\nabla f(x)=0 $ or $\nabla f(x)<\epsilon $ is not met, you update the following function:
+		
+		$$x_{t+1} = x_t - \alpha \nabla f(x_t)$$
+
+
+		\vspace{\baselineskip}
+		\textbf{Example}
+
+		Imagine you have the following function to minimize:
+		$$ f\begin{pmatrix} x_1 \\ x_2 \end{pmatrix} = x_1^2 + 2(x_2-1)^2 \forall x_1, x_2 \in [-10,10]$$
+		
+		The first step you take is to initialize your x vector. For instance we begin at $f(x_1=1,x_2=1) = 1$ and we choose a learning rate $\alpha = 0.5$. We can compute the gradient of $f(x_1,x_2)$:
+		$$ \nabla f \begin{pmatrix} x_1 \\ x_2 \end{pmatrix} = \begin{pmatrix} 2 x_1 \\ 2(x_2-1) \end{pmatrix} $$
+		
+		Then we apply the update formula:
+		$$ x_{t+1} = x - \alpha \nabla f(x) $$
+		$$ x_{t+1} = \begin{pmatrix} x_1 \\ x_2 \end{pmatrix} - \alpha \nabla f\begin{pmatrix} x_1 \\ x_2 \end{pmatrix} $$
+		$$ x_{t+1} = \begin{pmatrix} 1 \\ 1 \end{pmatrix} - 0.5 \begin{pmatrix} 2 \\ 0 \end{pmatrix} $$
+		$$ x_{t+1} = \begin{pmatrix} 1 \\ 0 \end{pmatrix} $$
+
+		We now are at $f(x_1=1,x_2=1) = 0$ and the gradient $ \nabla f(x_1=1,x_2=0) = (0,0)$. 
+		Now, we could run again the algorithm with other initial parameter to discover whether or not the minimum we just found is the global one or not.
+
+		\vspace{\baselineskip}
+		\textbf{Quadratic approximation}
+
+		There is other ways of interpreting gradient descent. One of them is considering the quadratic approximation of the loss function $f$ at the current point $x_t$ where we replace the Hessian term of the approximation $\nabla^2 f(x_t)$ by $1/\alpha I$ :
+
+		$$ f(y) = f(x_t)+\nabla f(x_t)^T(y-x_t) + \frac{1}{2\alpha}\norm{y-x_t}_2^2  $$
+
+		To find our $x_{t+1}$ we search for the minimum of this quadratic approximation of $f$ at $x$. To match our sources, we now note $g \leftarrow \nabla f(x)$ which gives us:
+
+		\begin{equation}
+			x_{t+1} = \argmin_x f(x_t)+ g \cdot (x-x_t) + \frac{1}{2\alpha}\norm{x-x_t}_2^2
+			\label{eq:gradient_descent}
+		\end{equation}
+		$$  = \argmin_x g \cdot x + \frac{1}{2\alpha}\norm{x-x_t}_2^2 $$
+
+		Setting the derivative to zero and developing this expression, we find as before : 
+
+		$$ x_{t+1} = x_t - \alpha \nabla f(x_t) $$
+
+		On expression \ref{eq:gradient_descent} we see two terms. The first one ($f(x_t)+\nabla f(x_t)^T(x-x_t)$) is a linear approximation to $f$ whereas the second one ($\frac{1}{2\alpha}\norm{x-x_t}_2^2 $) is a proximity term to x weighted with $\frac{1}{2\alpha}$ stating that we don't want to move too far from our current iterate $x_t$.
+		
+
+
+	\subsection{Follow The Regularized Leader - Proximal}
+
+		The algorithm we use in our program is "Follow The Regularized Leader - Proximal" (FTPRL). I order to understand this algorithm, we are first going to see a closely-related algorithm: the Composite-Objective MIrror Descent (COMID). 
+
+		\vspace{\baselineskip}
+		\textbf{Mirror Descent \footnote{\url{http://www.cs.cmu.edu/~ggordon/10725-F12/schedule.html}}}
+
+		Gradient descent is a type of mirror descent. As we saw previously, gradient descent can be understood a quadratic approximation of $f$ at $x_t$. Now, Mirror descent is different in the sense that, instead of using the L2 norm as distance it uses a Bregman divergence $\Delta B(x,x_t)$ to measure the update distance.
+
+		$$ x_{t+1} = \argmin_x f(x_t)+\nabla f(x_t)^T(x-x_t) + \Delta B_{1:t}(x,x_t)  $$
+		$$  = \argmin_x g\cdot x + \Delta B_{1:t}(x,x_t)  $$
+
+		\vspace{\baselineskip}
+		\textbf{Composite-Objective Mirror Descent \cite{mcmahan2011follow}}
+
+		The COMID adds to the mirror descent a regularization functions noted $\Psi$. Such that the updates becomes:
+
+		$$ x_{t+1} = \argmin_x f(x_t)+\nabla f(x_t)^T(x-x_t) + \Delta B_{1:t}(x,x_t) + \Psi(x) $$
+		$$ = \argmin_x g\cdot x + \Delta B_{1:t}(x,x_t) + \Psi(x) $$
+
+		\vspace{\baselineskip}
+		\textbf{Follow the regularized leader - proximal \cite{mcmahan2011follow}}
+
+		FTPRL is a COMID with a Bregman divergence $\Delta B(x,x_t) = \frac{1}{2}\norm{Q_t^{1/2}(x-x_t)}_2^2$. This Bregman divergence is adaptive to the time $t$ and the features as $Q_t$ is chosen such that $Q_{1:t} = diag(\sigma_{t,1},...,\sigma_{t,n})$ and $\sigma_{t,i} = \frac{1}{\gamma}\sqrt{\sum_{s=1}^t g_{t,i}^2}$. More information is given on the cited paper, page 527. The update formula is:
+
+		$$ x_{t+1} = \argmin_x f(x_t)+\nabla f(x_t)^T(x-x_t) + \frac{1}{2}\norm{Q_{1:t}^{1/2}(x-x_t)}_2^2 + \Psi(x) $$
+		$$ = \argmin_x g_t\cdot x + \frac{1}{2}\norm{Q_{1:t}^{1/2}(x-x_t)}_2^2 + \Psi(x)$$
+
+
+		\vspace{\baselineskip}
+		\textbf{FTPRL we use \cite{mcmahan2013ad}}
+
+		The FTPRL algorithm we use in this report is described on a paper published by Google \cite{mcmahan2013ad}. We use their update formula:
+		
+		\begin{equation}
+			x_{t+1} = \argmin_x g_{1:t}\cdot x + \frac{1}{2}\sum_{s=1}^t{\sigma_s \norm{x-x_t}_2^2 + \lambda_1 x_1}
+			\label{eq:FTPRL}
+		\end{equation}
+
+		The apparition of the term $g_{1:t} = \sum_{s=1}^t g_s$ is explained on theorem 2 of paper \cite{mcmahan2011follow}.
+
+
+

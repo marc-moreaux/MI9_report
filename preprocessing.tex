@@ -1,48 +1,254 @@
 
-
-\section{pre-processing the data}
+\section{Feature-engineering the input}
 \label{sec:preprocessing}
 
-	Pre-processing is the fact of transforming an input data into another input data. As it comes before processing the data, it should help this step in doing better work.
-	Right below we present three neural network techniques to pre-process the data. Those techniques are described on the "Unsupervised Feature Learning and Deep Learning"\footnote{\url{http://ufldl.stanford.edu/wiki/index.php/UFLDL_Tutorial}} wiki tutorial provided by Stanford.
+	As stated in the introduction, the dataset provided by \textit{Tradeshift} doesn't come with a feature by feature descriptions. In section \ref{sec:dataset} we described what could a feature mean and in section \ref{sec:personal_analyze} we give some hypothesis on these features. Given this few information on the dataset, we tried different input features on our model. At first, we tried using initial features preprocessing them, then we proposed a feature encoding, then a hash-equality feature and finally a feature reflecting the presence of a neighbor.
 
 	\subsection{Data normalization}
-		For data normalization, the common methods are: simple rescaling, per-example mean subtraction and feature standardization.\\
-		Simple rescaling aims at having all the data dimension on the same scale. You wouldn't want to have an independent feature with values in range [$10^{-5}$,$3*10^{-5}$] and another independent feature in range [$-10^{6}$,$10^{6}$]. Depending on the activation function, the data should be in the range [0,1] or [-1,1].
-		Per example mean subtraction consist of removing the mean value of a vector. For instance, if you want to examine the stability of a plane in the air and you have an altitude feature then you may reconsider your ground reference. You can instead consider a mean \textit{plane in the air altitude} as reference to subtract the altitude to.
-		Feature standardization consist in two steps: first, setting the input vectors mean to a zero mean and second, setting the variance to a unit variance. To do this, one needs to compute the mean and the variance of the data, then subtract the mean and divide by the variance each data points.
+
+		When working with logistic regression, it's preferable to normalize the inputs. Right below we present three standard data normalization techniques originating from the "Unsupervised Feature Learning and Deep Learning"\footnote{\url{http://ufldl.stanford.edu/wiki/index.php/UFLDL_Tutorial}} wiki tutorial provided by Stanford. We can use these deep learning techniques with our model as logistic regression is also in the family of neural networks. After applying one (or more) of these techniques, the training speed of the model should be increased.
+
+		The three data normalization techniques are called: simple rescaling, per-example mean-subtraction and feature standardization.\\
+		\begin{itemize}
+			\item "Simple rescaling" aims at having all the data dimension on the same scale. You wouldn't want to have an independent feature with values in range [$10^{-5}$,$3*10^{-5}$] and another independent feature in range [$-10^{6}$,$10^{6}$]. Depending on the activation function, the data should be in the range [0,1] or [-1,1]. Therefore, you would multiply your initial inputs with a constant for them to be scaled in the desired range.
+			\item "Per example mean-subtraction" consist of subtracting the mean value of a vector. For instance, if you want to examine the stability of a plane in the air and you have an altitude feature then you may reconsider your ground reference. You can instead consider a mean \textit{plane in the air altitude} as reference to subtract the maen altitude to.
+			\item "Feature standardization" consist in two steps: first, doing mean-subtraction and second, setting the variance to a unit variance. To do this, one needs to compute the mean and the variance of the data, then subtract the mean and divide by the variance each data points.
+		\end{itemize}
+
+		In the project we used the feature-standardization in two different ways. At first, we used a "classic method": normalizing separately all the features. At second, we tried to take advantage of the 5 blocks hypothesis seen back in section \ref{sec:personal_analyze}. To do so, we tested mean-subtraction and feature-standardization on every same kind of features. For instance: the input feature 1, 30, 59, 88 and 117 were merged together resulting in a shared mean value and a shared variance.
+
+		\vspace{\baselineskip}
+		\textbf{results\footnote{All the results are available at \url{https://github.com/marc-moreaux/text_classification}}}
+
+		\Fref{tab:normalization} gives a performance comparison between some normalization. All of the 3 algorithms stoped after the 6k initial training samples. This means that after 6k samples, training on the next 1k sample didn't improve the validation result above 2\%. Unexpectedly, using the feature standardization (\textit{FTPRL[x]\_classic\_norm}), does not imply converging faster. On (\textit{FTPRL[x]\_no\_norm}) we see that the algorithm converged faster without normalization. Also, the attempt to take advantage of the 5 blocks consideration didn't improved the convergence nor did it penalized it. Normalizing on 5 blocks (\textit{FTPRL[x]\_5\_bloc\_norm}) converges at the same speed than normalizing every different features (\textit{FTPRL[x]\_classic\_norm}).
+
+
+		\begin{table}
+			\centering
+			\begin{tabular}{c|c|c}
+				Algorithm 			 & $x=18$ & $x=17$ \\
+				\hline
+				FTPRL[x]\_no\_norm		& 0.195626763424 & 0.204790168023 \\
+				FTPRL[x]\_classic\_norm	& 0.199563944287 & 0.242193956451 \\
+				FTPRL[x]\_5\_bloc\_norm	& 0.199563944287 & 0.242193956451 \\
+			\end{tabular}
+			\caption{Model results given the normalization. [x] stands for the feature it has been training on.}
+			\label{tab:normalization}
+		\end{table}
+
+		Even though it seems logical to use the data not normalized, we kept it normalized. \Fref{tab:FTPRL_feat} is the result of training our model with the normalized features. This training will be the baseline we will use to compare the future hand-engineered features.
+		\begin{table}
+			\centering
+			\begin{tabular}{c|c|c|c|c|c|c|c|c|c}
+				step i = & 1  & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9\\
+				\hline
+				New feature 			 & [18] & [2] & [21] & [11] & [7] & [25] & [19] & [16] & [9] \\
+				FTPRL\_feat	&  .1995 & .1819 & .161 & .1509 & .1414 & .1342 & .1293 & .1248 & .1224   \\
+			\end{tabular}
+			\caption{Result of feeding FSSFTPRL with all the initial normalized features. At step "i" the model choses a new feature to learn with (FSS) }
+			\label{tab:FTPRL_feat}
+		\end{table}
+
+		It is obvious data normalization is not enough for achieving good results with our model. We now present hand-engineered features that might help our system.
+
+
+	\subsection{One-hot feature encoding}
+	
+		The features 3 and 4 (of the 5 blocs), are hash-values. Using a linear encoding of these features didn't seem to make sens. We investigated in some techniques to take advantage of these features.
+
+		The first method we propose is an indexation represented in a one-hot format. Recall the initial dataset given by \textit{Tradeshift} had 986'837 hash-values. We indexed these values by order of apparition and got an integer value for any of these hashes. The results presented on \fref{tab:normalization} considered this integer as it was or normalized. Now, we propose to transform this integer value to a one-hot feature. We do the transformation for the hash-values, but also for every other features in order to take advantage, for instance, of a numeric coding. 
+
+		One-hot encoding works as follow: Consider a feature vector $[1,2,3,1]$. There is $3$ values on the vector. Therefore every occurrences of $1$ will be replaced by a 3 dimensions vector $[1,0,0]$. As we can see, there is a single "1" and many "0" on that new vector, this is the reason for calling this encoding a "one-hot encoder". That "1" will be the only value of the feature propagating energy on the model. For floating values, this method removes the proximity relation between (for instance) 0.5 and 0.55 or in between 50 and 51 but brings closer in the model all the features with the exact same values. 
+
+		To build each and every feature "one-hot encoded" we indexed the features. That index is the position of the "1" in the newly created one-hot-vector. The indexation is described on python code \ref{alg:algo_indexize}.
+
+		\begin{algorithm}[H]
+			As prerequisite, we need an array telling which are the desired features to encode. \\
+			\Begin{
+				\For{ $x_i  \in X$}{
+					\For{ $x_{ij} \in x_i$ }{
+						(...)\\
+						\If{$x_{ij}$ \text{is a feature to encode } }{
+							tmp $\leftarrow$ index of $x_{ij}$ in its corresponding dictionary\;
+							store tmp in a array of indexes\;
+						}
+					}
+				}
+			}
+			\KwResult{The desired features $x_{ij}$ have been one-hot-encoded. The index of the '1' is stored in an array of indexes}
+			\caption{This algorithm show how the sample features are one-hot-encoded. 'X' is the initial dataset, from there, we consider each of the features $x_{ij}$. If this feature $x_{ij}$ is to be encoded, we retrieve its index from a corresponding dictionary and store it in memory. }
+			\label{alg:algo_indexize}
+		\end{algorithm}
+
+		Lets make a concrete example and consider indexing feature 18. We consider the features 18, 47, 76, 105 and 134 (which correspond to feature 18 on each of the blocs) and index them. After summing the amount of elements in all the blocks corresponding to feature 18, we count 111 elements (111 indexes). To separate the five blocks one from another, we create $111*5 = 555$ neurons. If for one sample the feature 18, 47, 76, 105 and 134 equals the vector [0.123, 0.312, 0.123, 0.231, 0.312] then its indexed array may have the values [45,72,45,13,72] and we activate the neurons \{$0+45$, $111+72$, $222+45$, $333+13$ and $444+72$\}
+
+		\vspace{\baselineskip}
+		\textbf{results}
+		
+		Using this technique drastically changes the results \fref{tab:FTPRL_feat_1hot} of our model. We see that using the one-hotted feature \{17\} directly beats the best score we had with \textit{FTPRL\_feat}. Sadly, the remote computer was switched off during the training so only 3 features were selected by FSS. Even though, it's enough to see how one-hotted features can beat our baseline.
+
+		\begin{table}
+			\centering
+			\begin{tabular}{c|c|c|c}
+				step i = & 1 & 2 & 3 \\
+				\hline
+				New feature 		& \{17\} & \{4\} & \{3\}    \\
+				FTPRL\_feat\_1hot	&  0.0824 & 0.0722 & 0.0662 \\
+			\end{tabular}
+			\caption{Result of feeding FSSFTPRL with all the one-hotted features . At step "i" the model choses a new feature to learn with (FSS). \{x\} stands for one-hotted feature [x]  }
+			\label{tab:FTPRL_feat_1hot}
+		\end{table}
 
 
 
-	In our case, we have to pre-process an input matrix so it help our neural network in performing better.
-	As mentioned in section \ref{sec:dataset}, the dataset has a large collection of different features (position, cryptography, parsing...). Those features are initially defined as either binaries, integer, or text values. We need to pre-process those to have a fully numerical input vector.
-	Out of the 145 features, we have preprocessed 135 following the feature standardization. The 10 features that haven't been normalized are the hash-text features.
+		\subsection{Hash-equality feature}
+			The second method we propose to take advantage of the hash-codes is a inner pairwise hash-equality feature. This method was considered because, when looking through the original CSV, we noticed that the hash-codes were often repeated inside the features. 
+
+			It works as follows: out of the 145 features, 10 are hash-coded, therefore, the \textit{binary pairwise hash-equality feature vector} (HEFV) is consisting of $C_{10}^2 = \frac{10!}{(10-2)! 2!} = 45$ dimensions. The 45 dimensions represent the 45 possible pairs we can find on the 10 hash features. The HEFV will consist of zeros and ones. For instance, we considered the first dimension of HEFV to reflect the equality of feature 1 and 2, as a result, HEFV$_1 = 1$ if hash-feature 1 and 2 are identical or 0 if different.
+
+			This method is further explained on algorithm \ref{alg:hash_eq}.
+
+
+			\begin{algorithm}[H]
+				As prerequisite, we create an array 'newFeature' of size 45 filled with -1. It correspond to the HEFV. (i,j) refers to the index of the pair composed by i and j. An example mentioned earlier used the pair (1,2) corresponding to HEFV$_1$. \\
+				\Begin{
+					\For{ $x_i  \in X$}{
+						\For{ $x_{ij} \in x_i$ }{
+							(...)\\
+							\If{$x_{ij}$ \text{is a hash-feature } }{
+								hashIdx $\leftarrow$ index of hashFeature $\in [1 ... 10]$\;
+								\textit{We then update 'newFeature' on the 9 times $x_{ij}$ appears: \\}
+								\For{ i $\in [1 ... hashIdx]$  }{
+									update newFeature[ (i,hashIdx) ] \;
+								}
+								\For{ j $\in [hashIdx+1 ... 10]$  }{
+									update newFeature[ (hashIdx,j) ] \;
+								}
+							}
+						}
+					}
+				}
+				Here is the logic beneath the 'update newFeature'\\
+				\Begin{
+					\eIf{newFeature[ (i,hashIdx) ] = -1}{
+						newFeature[ (i,hashIdx) ] $\leftarrow$ $x_{ij}$\;
+					}{
+						\eIf{newFeature[ (i,hashIdx) ] = $x_{ij}$}{
+							newFeature[ (i,hashIdx) ] $\leftarrow$ 1\;
+						}{
+							newFeature[ (i,hashIdx) ] $\leftarrow$ 0\;
+						}
+					}
+				}
+
+				\KwResult{The array 'newFeature' is filled with the values of HEFV. }
+				\caption{This algorithm show how to compute the \textit{binary pairwise hash-equality feature vector} (HEFV). There is a subroutine ('update newFeature') described in the second part.  }
+				\label{alg:hash_eq}
+			\end{algorithm}
+
+			We were also curious to know if a broader consideration of the pairs could have a positive impact on the training. We created a \textit{binary pairwise feature-equality feature vector} (FEFV). The logic beneath that implementation is the same as the HEFV. 
+
+			We didn't tried further considerations on the other tuples because of memory constrains. We though about looking for all the possible tuples in the 145 feature vector but this consideration would have resulted on a $\sum_{i=2}^{145} C_{145}^i > 4e^{43}$ feature vector.
+
+			\vspace{\baselineskip}
+			\textbf{results}
+			
+			The results achieved considering these two new features are presented on \fref{tab:FTPRL_feat_HEVF} and \fref{tab:FTPRL_feat_FEVF}. Once again, the processes were shut-down. Still we see that both of these features improve the training. HEVF points out the importance of Hash equality in the training whereas FEVF points out that some equalities are important. A deeper look on the weights should reveal the pairs that bring the better performance. It's nice to notice that we can FEFV could be re-used in other dataset without knowledge on the features and might improve the learning.
+
+			\begin{table}
+				\centering
+				\begin{tabular}{c|c|c|c|c|c}
+					step i = & 1 & 2 & 3 & 4 & 5 \\
+					\hline
+					New feature 		& [18] & HEVF & [25] & [1] & [11] \\
+					FTPRL\_feat\_HEVF	&  .1995 & .0965 & .0883 & .0851 & .0837 \\
+				\end{tabular}
+				\caption{Result of feeding FSSFTPRL with all the initial normalized features and HEVF. At step "i" the model choses a new feature to learn with (FSS).  }
+				\label{tab:FTPRL_feat_HEVF}
+			\end{table}
+
+			\begin{table}
+				\centering
+				\begin{tabular}{c|c|c|c}
+					step i = & 1 & 2 & 3  \\
+					\hline
+					New feature 	&	FEVF & [18] & [17] \\
+					FTPRL\_feat\_FEVF	&  .1053 & .1003 & .0846 \\
+				\end{tabular}
+				\caption{Result of feeding FSSFTPRL with all the initial normalized features and FEVF. At step "i" the model choses a new feature to learn with (FSS).  }
+				\label{tab:FTPRL_feat_FEVF}
+			\end{table}
+
+
+		\subsection{Final result}
+			All together FSSFTPRL produces the result visible on \fref{tab:FTPRL_all}. Once again, the training stopped before achieving the end. It's even though our best result. We see that FSSFTPRL selected one-hotted features and hash-equality feature. Funnily he performed better choosing the restricted pairs HEFV than FEFV. From this observation we can hypothesize on the necessity of realizing a FSS or BSS on the FEFV.
 
 
 
-	\subsection{Hash text transformation}
-		TODO: explain process to go from hash to integer (dictionary, python code)
+			\begin{table}
+				\centering
+				\begin{tabular}{c|c|c|c|c}
+					step i = & 1 & 2 & 3 & 4 \\
+					\hline
+					New feature 	& \{17\} & \{4\} & \{3\} & HEFV \\
+					FTPRL\_all	&  0.0824 & 0.0722 & 0.0662 & .0576\\
+				\end{tabular}
+				\caption{Result of feeding FSSFTPRL with all features seen so far. }
+				\label{tab:FTPRL_all}
+			\end{table}
+
+		% \subsection{Has-neighbor feature}
+		% 	The last consideration we added in the model came from the neighbor hypothesis mentioned in section \ref{sec:personal_analyze}. Back there we supposed that each of the five blocs represented an element and that the 4 firsts blocs were some neighboring elements. We saw from times to times some of these 4 blocs without values, which would mean the main element is lacking a neighbor by some hierarchical consideration. In order to consider this in our model, we created a 4 dimension \textit{binary neighbor feature vector} (NbFV). 
+
+		% 	The vector was constructed as follows: NbFV$_1$ has a value of -1 if the first bloc is empty, else, a value of 1.
+
+		% 	The results achieved considering NbFV new features are presented on table \ref{tab:neighbor}
+
+		% 	\begin{table}
+		% 		\centering
+		% 		\begin{tabular}{c|c|c}
+		% 			Algorithm 				& steps & Result \\
+		% 			\hline
+		% 			FTRL-prox\_cn	& \\
+		% 			FTRL-prox\_cn\_NbFV	& \\
+		% 		\end{tabular}
+		% 		\caption{Model results given the new neighbor features. 'cn': classic norm}
+		% 		\label{tab:neighbor}
+		% 	\end{table}
 
 
-	\subsection{analysis of the data}
-		TODO: see if some data doesn't help in the learning \\
-		$=>$ hash text with stats\\
-		$=>$ other with unsupervised learning tech
-
-	\subsection{Network structure}
-		TODO: Find one :p \\
-
-		TODO: Special case of hash values (many to few (from unsupervised results))
-		As proposed on the competition forum, the text input from the hash code, will be translated into a single binary entry. In other terms, a hash code looking like 'ASddeF54(fd=' will take a binary value '01000'. 
 
 
 
-	\subsection{initial values of hidden weights}
 
-		The initial values for the weights of a hidden layer i should be uniformly sampled from a symmetric interval that depends on the activation function. For tanh activation function results obtained in [Xavier10] show that the interval should be 
-		$[-\sqrt{\frac{6}{fan_{in}+fan_{out}}},\sqrt{\frac{6}{fan_{in}+fan_{out}}}] $,
-		where $fan_{in}$ is the number of units in the $(i-1)-th$ layer, and $fan_{out}$ is the number of units in the $i-th$ layer. For the sigmoid function the interval is $[-4\sqrt{\frac{6}{fan_{in}+fan_{out}}},4\sqrt{\frac{6}{fan_{in}+fan_{out}}}]$.
-		This initialization ensures that, early in training, each neuron operates in a regime of its activation function where information can easily be propagated both upward (activations flowing from inputs to outputs) and backward (gradients flowing from outputs to inputs).
 
-		[Xavier10] => Y. Bengio, X. Glorot, Understanding the difficulty of training deep feedforward neuralnetworks, AISTATS 2010
 
+
+
+
+
+% \begin{lstlisting}[language=Python]
+% ### getDicoIdx retrieve an ID given a value 'val'. This ID correspond to 
+% ### the index of 'val' in the hashlist 'dico'.
+% def getDicoIdx(dico, val):
+%   if val not in dico:
+%     dico[val] = len(dico)
+%   return dico[val]
+
+% ### The code reads 
+% ### VARIABLES:
+% # 'm' is the feature to index. 
+% # 'P.idx_toDoAll' is an array of 
+
+% 18; we index features 18,47, 76, 105 and 134
+% # x_indexed is a vector containing the indexes of the the desired feature
+% #  => ex: (5,72,45,13,72)
+% # getDicoIdx is a dictionary with the feature (18) values
+% #  => ex: {0.123: 45 , 0.312: 72 , 0.312: 13 }
+
+% for sample in samples:
+%   for m,feat in enumerate(sample):
+%     (...)
+%     if m in idx_toDo:
+%       x_indexed[ idx_toDo.index(m) ] = getDicoIdx(idx_dico[m%29] , feat)
+% \end{lstlisting}
